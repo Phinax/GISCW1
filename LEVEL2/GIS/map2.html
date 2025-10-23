@@ -27,22 +27,22 @@
             // Initialize the map
             var map = new google.maps.Map(document.getElementById('map'), mapOptions);
             
-            // First marker (London)
+            // Add Marker 1 (London) with Population Info
             var marker1 = new google.maps.Marker({
                 position: {lat: 51.5074, lng: -0.1278}, // Coordinates for London
                 map: map,
                 title: 'London'
             });
-            
+
             var infowindow1 = new google.maps.InfoWindow({
-                content: '<h3>London</h3><p>Capital city of the UK</p>'
+                content: '<h3>London</h3><p>Capital city of the UK</p><p>Population: 9,304,000</p>'
             });
 
             marker1.addListener('click', function() {
                 infowindow1.open(map, marker1);
             });
 
-            // Second marker (Paris)
+            // Add Marker 2 (Paris) with Population Info
             var marker2 = new google.maps.Marker({
                 position: {lat: 48.8566, lng: 2.3522}, // Coordinates for Paris
                 map: map,
@@ -50,7 +50,7 @@
             });
 
             var infowindow2 = new google.maps.InfoWindow({
-                content: '<h3>Paris</h3><p>Capital city of France</p>'
+                content: '<h3>Paris</h3><p>Capital city of France</p><p>Population: 2,165,000</p>'
             });
 
             marker2.addListener('click', function() {
