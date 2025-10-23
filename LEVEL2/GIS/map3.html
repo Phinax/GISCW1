@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map 3: OpenLayers with Google Maps</title>
+    <!-- OpenLayers CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/ol@6.7.0/ol.css" />
+    <script src="https://unpkg.com/ol@6.7.0/dist/ol.js"></script>
+    <style>
+        /* Ensure the map container is properly sized */
+        #map {
+            width: 100%;
+            height: 500px; /* Set height for the map container */
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Map 3: OpenLayers with Google Maps as Base Layer</h2>
+    <div id="map"></div>
+
+    <script>
+        // Google Maps API Key (Replace this with your own key)
+        const googleMapsAPIKey = 'YOUR_GOOGLE_MAPS_API_KEY';
+
+        // Initialize the map
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.XYZ({
+                        url: `https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=${googleMapsAPIKey}`, // Google Maps tile URL
+                        attributions: 'Map data &copy; <a href="https://www.google.com/intl/en-US_US/help/terms_maps/">Google</a>'
+                    })
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([2.3522, 48.8566]), // Initial center at Paris
+                zoom: 5  // Initial zoom level
+            })
+        });
+
+        // Create marker 1 (London)
+        var marker1 = new ol.Overlay({
+            position: ol.proj.fromLonLat([-0.1278, 51.5074]), // London coordinates
+            positioning: 'center-center',
+            element: document.createElement('div')
+        });
+        marker1.getElement().classList.add('marker');  // Add a class for the marker
+        map.addOverlay(marker1);
+
+        // Create marker 2 (Paris)
+        var marker2 = new ol.Overlay({
+            position: ol.proj.fromLonLat([2.3522, 48.8566]), // Paris coordinates
+            positioning: 'center-center',
+            element: document.createElement('div')
+        });
+        marker2.getElement().classList.add('marker');
+        map.addOverlay(marker2);
+
+        // Create marker 3 (Berlin)
+        var marker3 = new ol.Overlay({
+            position: ol.proj.fromLonLat([13.4050, 52.5200]), // Berlin coordinates
+            positioning: 'center-center',
+            element: document.createElement('div')
+        });
+        marker3.getElement().classList.add('marker');
+        map.addOverlay(marker3);
+    </script>
+
+</body>
+</html>

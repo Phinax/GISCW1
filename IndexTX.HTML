@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map with Google Maps</title>
+    <style>
+        #myMapspace {
+            height: 500px;
+            width: 500px;
+            background-color: lightblue;
+            border: 8px solid blue;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="myMapspace"></div>
+
+    <script>
+        function draw_map() {
+            // Map options
+            var myMapOptions = {
+                center: new google.maps.LatLng(52.417, -3.573), // Coordinates of the center of the map
+                zoom: 7,  // Initial zoom level
+                mapTypeId: google.maps.MapTypeId.ROADMAP  // Default map type (roadmap view)
+            };
+
+            // Initialize the map
+            var mymap = new google.maps.Map(document.getElementById("myMapspace"), myMapOptions);
+
+            // First marker (with a basic marker)
+            var loc1 = new google.maps.LatLng(51.47806, -3.1825);  // First marker coordinates
+            var mkrOpt1 = {
+                position: loc1,
+                map: mymap
+            };
+            var mkr1 = new google.maps.Marker(mkrOpt1);
+
+            // Second marker with a custom icon
+            var image1 = 'https://example.com/path/to/your/icon.png';  // Use a valid icon URL for custom markers
+            var mkr2 = new google.maps.Marker({
+                position: {lat: 51.642989, lng: -3.934979},  // Second marker coordinates
+                map: mymap,
+                title: 'Liberty Stadium',  // Title for the second marker
+                icon: image1  // Custom icon for this marker
+            });
+
+            // Adding info windows to the markers (optional, for interactivity)
+            var infowindow1 = new google.maps.InfoWindow({
+                content: "<h3>Marker 1: Custom Location</h3><p>This is the first marker at location 1.</p>"
+            });
+            mkr1.addListener('click', function() {
+                infowindow1.open(mymap, mkr1);
+            });
+
+            var infowindow2 = new google.maps.InfoWindow({
+                content: "<h3>Marker 2: Liberty Stadium</h3><p>Location of Liberty Stadium.</p>"
+            });
+            mkr2.addListener('click', function() {
+                infowindow2.open(mymap, mkr2);
+            });
+        }
+    </script>
+
+    <!-- Load Google Maps API with your key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQyVcKospZ88RyOY6LrqjdXyMlZ7G8JGs&callback=draw_map" async defer></script>
+
+</body>
+</html>

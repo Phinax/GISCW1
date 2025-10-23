@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CMD Tic-Tac-Toe — Final (Stable)</title>
+<style>
+:root{
+  --bg:#000;
+  --cmd:#00ff41;
+  --muted:#077;
+  --xcolor:#ff3030;
+  --ocolor:#00ff41;
+  --gold:#ffd700;
+}
+*{box-sizing:border-box;font-family:Consolas,monaco,monospace}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--cmd);overflow:hidden}
+
+/* sections/pages */
+section{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:12px;transition:opacity .45s ease}
+.hidden{display:none;opacity:0}
+.fadeout{opacity:0}
+
+/* drizzle canvas (behind UI, only used on page1 & 2) */
+#drizzleCanvas{position:fixed;left:0;top:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* footer credit - bottom center, pulsing */
+#creditFooter{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:40;pointer-events:none;
+  color:var(--gold);opacity:0;font-size:14px;background:rgba(0,0,0,0.22);padding:8px 12px;border-radius:8px;border:1px solid rgba(255,215,0,0.06);
+  transition:opacity 1.5s ease;filter:drop-shadow(0 6px 18px rgba(255,215,0,0.06));
+}
+@keyframes breathe{0%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.02)}100%{transform:translateX(-50%) scale(1)}}
+.footer-pulse{animation:breathe 3s ease-in-out infinite}
+
+/* UI elements */
+.cmdInput{background:#000;color:var(--cmd);border:1px solid #033;padding:8px;margin-top:8px;border-radius:6px;width:220px}
+.btn{background:transparent;border:1px solid #033;padding:8px 12px;color:var(--cmd);cursor:pointer;border-radius:6px;margin:6px}
+.btn:hover{background:rgba(0,255,65,0.04)}
+.muted{color:var(--muted);font-size:13px}
+
+/* Board */
+.board-wrap{perspective:1200px;width:100%;max-width:1100px;z-index:20}
+.board{display:grid;gap:8px;transition:transform .9s;transform-style:preserve-3d;margin:8px auto}
+.board.flip{animation:boardFlip .9s ease-in-out}
+@keyframes boardFlip{0%{transform:rotateY(0)}50%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+.cell{display:flex;align-items:center;justify-content:center;background:#000;border:1px solid #033;color:var(--cmd);user-select:none;cursor:pointer;aspect-ratio:1/1;border-radius:8px;transition:transform .12s;font-weight:800}
+.cell:hover{transform:translateY(-3px)}
+.cell.disabled{opacity:.35;pointer-events:none}
+
+/* scoreboard */
+#scoreboard{margin-top:12px;display:flex;gap:18px;align-items:center;justify-content:center;font-size:18px;font-weight:700;z-index:20}
+.score-item{padding:8px 12px;border-radius:8px;border:1px solid rgba(0,255,65,0.06);background:rgba(0,0,0,0.45)}
+.score-x{color:var(--xcolor)} .score-o{color:var(--ocolor)} .score-draw{color:var(--gold)}
+
+/* fireworks overlay */
+#fwcanvas{position:fixed;left:0;top:0;width:100%;height:100%;z-index:80;pointer-events:none;display:none}
+#fwOverlay{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:90;pointer-events:none}
+.fwMessageBox{pointer-events:auto;background:rgba(0,0,0,0.66);padding:18px 24px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);text-align:center;font-size:22px;color:var(--gold)}
+.fwButtons{margin-top:12px;display:flex;gap:12px;justify-content:center}
+.fwBtn{background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--cmd);padding:8px 12px;border-radius:8px;cursor:pointer}
+
+/* small screens */
+@media (max-width:480px){
+  .cmdInput{width:170px}
+  .fwMessageBox{font-size:18px;padding:12px}
+  #creditFooter{font-size:12px;padding:6px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- Drizzle canvas (only visible on page1 and page2) -->
+<canvas id="drizzleCanvas" aria-hidden="true"></canvas>
+
+<!-- PAGE 1: LOGIN -->
+<section id="pageLogin">
+  <pre id="bootText" class="typing" aria-hidden="true"></pre>
+  <div id="loginArea" class="hidden" style="min-width:260px;z-index:25">
+    <label class="muted">Enter your name:</label><br>
+    <input id="nameInput" class="cmdInput" placeholder="Player" autocomplete="off"/><br>
+    <div style="margin-top:10px">
+      <button id="loginBtn" class="btn">Continue</button>
+      <button id="clearData" class="btn">Clear Data</button>
+    </div>
+    <div class="muted" style="margin-top:8px;font-size:12px">(Press Enter or tap anywhere)</div>
+  </div>
+</section>
+
+<!-- PAGE 2: MODE -->
+<section id="pageMode" class="hidden">
+  <h2 id="hiName">Welcome</h2>
+  <div class="muted">Choose mode</div>
+  <div style="margin-top:12px;z-index:25">
+    <button id="twoBtn" class="btn">Local 2 Player</button>
+    <button id="aiBtn" class="btn">Play vs AI</button>
+  </div>
+  <div id="aiSettings" class="hidden" style="margin-top:12px;z-index:25">
+    <div class="muted">AI Difficulty</div>
+    <select id="aiDifficulty" class="cmdInput">
+      <option value="easy">Easy</option>
+      <option value="medium" selected>Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+  </div>
+  <div style="margin-top:12px;z-index:25">
+    <button id="startGame" class="btn">Start Game</button>
+    <button id="exitMode" class="btn">Exit</button>
+  </div>
+</section>
+
+<!-- PAGE 3: GAME -->
+<section id="pageGame" class="hidden" style="overflow:auto;padding:14px;z-index:30">
+  <div style="display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:10px;z-index:30">
+    <div class="muted">Player: <strong id="playerLbl">Player</strong></div>
+    <div class="muted">Mode: <strong id="modeLbl">2p</strong></div>
+    <div class="muted">AI: <strong id="aiLbl">-</strong></div>
+    <div class="muted">Grid: <strong id="gridLbl">3x3</strong></div>
+    <div class="muted">Draws: <strong id="drawsLbl">0</strong></div>
+  </div>
+
+  <div class="board-wrap"><div id="board" class="board" aria-label="tic tac toe board"></div></div>
+
+  <div id="scoreboard" aria-live="polite" style="z-index:30">
+    <div class="score-item score-x">X Wins: <span id="winsX">0</span></div>
+    <div class="score-item score-o">O Wins: <span id="winsO">0</span></div>
+    <div class="score-item score-draw">Draws: <span id="drawsTotal">0</span></div>
+  </div>
+
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;z-index:30">
+    <button id="undoBtn" class="btn">Undo</button>
+    <button id="restartBtn" class="btn">Restart Game (Reset Scores)</button>
+    <button id="toggleSound" class="btn">Toggle Sound</button>
+    <button id="exitGame" class="btn">Exit (Log out)</button>
+  </div>
+
+  <div id="statusPanel" style="margin-top:12px;z-index:30">Status: Ready</div>
+</section>
+
+<!-- fireworks overlay & canvas -->
+<canvas id="fwcanvas" aria-hidden="true"></canvas>
+<div id="fwOverlay" style="display:none">
+  <div id="fwMessageBox" class="fwMessageBox" role="dialog" aria-live="polite">
+    <div id="fwMessage"></div>
+    <div class="fwButtons">
+      <button id="fwRestart" class="fwBtn">Restart Game</button>
+      <button id="fwExit" class="fwBtn">Exit Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- Footer credit (center bottom) -->
+<div id="creditFooter">© 2025 Ubah Uchenna Phina · Student ID 23100749</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+  /* ---------- DOM refs ---------- */
+  const drizzleCanvas = document.getElementById('drizzleCanvas'), dctx = drizzleCanvas.getContext('2d');
+  const bootText = document.getElementById('bootText'), loginArea = document.getElementById('loginArea'), nameInput = document.getElementById('nameInput'), loginBtn = document.getElementById('loginBtn'), clearDataBtn = document.getElementById('clearData');
+  const hiName = document.getElementById('hiName'), twoBtn = document.getElementById('twoBtn'), aiBtn = document.getElementById('aiBtn'), aiSettings = document.getElementById('aiSettings'), aiDifficulty = document.getElementById('aiDifficulty'), startGame = document.getElementById('startGame'), exitMode = document.getElementById('exitMode');
+  const playerLbl = document.getElementById('playerLbl'), modeLbl = document.getElementById('modeLbl'), aiLbl = document.getElementById('aiLbl'), gridLbl = document.getElementById('gridLbl'), drawsLbl = document.getElementById('drawsLbl');
+  const winsXEl = document.getElementById('winsX'), winsOEl = document.getElementById('winsO'), drawsTotalEl = document.getElementById('drawsTotal');
+  const boardEl = document.getElementById('board'), undoBtn = document.getElementById('undoBtn'), restartBtn = document.getElementById('restartBtn'), toggleSoundBtn = document.getElementById('toggleSound'), exitGameBtn = document.getElementById('exitGame');
+  const fwCanvas = document.getElementById('fwcanvas'), fwCtx = fwCanvas.getContext('2d'), fwOverlay = document.getElementById('fwOverlay'), fwMessage = document.getElementById('fwMessage'), fwRestart = document.getElementById('fwRestart'), fwExit = document.getElementById('fwExit');
+  const creditFooter = document.getElementById('creditFooter');
+
+  /* ---------- state ---------- */
+  let playerName = '', mode = '2p', aiLevel = 'medium', soundOn = true;
+  let gridSize = 3, drawsTotal = 0, winsX = 0, winsO = 0;
+  let grid = [], currentPlayer = 'X', winner = null, history = [], blockedCells = {};
+  const maxGrid = 5, expandEveryDraws = 3;
+  let aiTimeout = null, drizzleRAF = null, drizzleActive = false, fwStop = false;
+
+  /* ---------- helpers ---------- */
+  function setStatus(s){ const el=document.getElementById('statusPanel'); if(el) el.textContent = 'Status: ' + s; }
+  function beep(){ if(!soundOn) return; try{ const a=new(window.AudioContext||window.webkitAudioContext)(); const o=a.createOscillator(), g=a.createGain(); o.connect(g); g.connect(a.destination); o.type='sine'; o.frequency.value=700; g.gain.value=0.02; o.start(); setTimeout(()=>{ o.stop(); a.close(); },70);}catch(e){} }
+
+  /* ---------- typing intro (unchanged) ---------- */
+  function typeLines(lines, el, done){
+    el.textContent = '';
+    let i = 0;
+    function nextLine(){
+      if(i >= lines.length){ done(); return; }
+      const chars = lines[i++].split('');
+      let k = 0;
+      function step(){ el.textContent += chars[k++] || ''; if(k < chars.length) setTimeout(step, 45); else { el.textContent += '\n'; setTimeout(nextLine, 360); } }
+      step();
+    }
+    nextLine();
+  }
+
+  /* ---------- Drizzle (XO) controller ---------- */
+  function createDrizzleController(){
+    const canvas = drizzleCanvas, ctx = dctx;
+    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; initCols(); }
+    let cols = 8, stacks = [], particles = [], maxParticles = 28;
+    let baseSize = Math.max(16, Math.min(36, Math.floor(Math.min(window.innerWidth, window.innerHeight)*0.04)));
+    function initCols(){ baseSize = Math.max(16, Math.min(36, Math.floor(Math.min(window.innerWidth, window.innerHeight)*0.04))); const spacing = Math.floor(baseSize*1.1); cols = Math.max(6, Math.floor(canvas.width/spacing)); stacks=[]; for(let c=0;c<cols;c++) stacks[c]=0; }
+    function spawn(initial){
+      const col = Math.floor(Math.random()*cols);
+      const spacingX = canvas.width/cols;
+      const x = col*spacingX + spacingX/2 + (Math.random()-0.5)*spacingX*0.35;
+      const y = initial ? Math.random()*canvas.height : - (20 + Math.random()*120);
+      const vy = 0.35 + Math.random()*0.45;
+      const vx = (Math.random()-0.5)*0.6;
+      const ch = Math.random()<0.5 ? 'X' : 'O';
+      const s = Math.max(12, baseSize - Math.random()*6);
+      return { x,y,vx,vy,ch,size:s,col,settled:false,alpha:0.9 };
+    }
+    function reset(clearStacks){
+      particles = []; for(let i=0;i<maxParticles;i++) particles.push(spawn(true));
+      if(clearStacks){ stacks = []; for(let c=0;c<cols;c++) stacks[c]=0; }
+    }
+    function frame(){
+      try{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        const bottom = canvas.height - 8;
+        const spacingY = baseSize * 0.88;
+        const spacingX = canvas.width / cols;
+        // draw stacks
+        for(let col=0; col<cols; col++){
+          const count = stacks[col] || 0;
+          for(let sI=0; sI<count; sI++){
+            const sx = col*spacingX + spacingX/2;
+            const sy = bottom - sI*spacingY;
+            ctx.globalAlpha = 0.10;
+            ctx.font = Math.floor(baseSize*0.9) + 'px Consolas,monospace';
+            ctx.fillStyle = 'rgba(0,255,65,0.08)';
+            ctx.fillText('X', sx - (baseSize/2), sy);
+            ctx.globalAlpha = 0.24;
+            ctx.fillStyle = 'rgba(0,255,65,0.16)';
+            ctx.fillText((sI%2===0)?'O':'X', sx - (baseSize/2), sy);
+          }
+        }
+        // particles
+        for(let i=particles.length-1;i>=0;i--){
+          const p = particles[i];
+          p.x += p.vx + Math.sin((p.y + i)*0.01)*0.18;
+          p.y += p.vy;
+          p.alpha = Math.max(0.4, p.alpha - 0.0001);
+          ctx.globalAlpha = p.alpha;
+          ctx.font = Math.floor(p.size) + 'px Consolas,monospace';
+          ctx.fillStyle = 'rgba(0,255,65,0.26)';
+          ctx.fillText(p.ch, p.x - p.size/2, p.y);
+          const targetY = canvas.height - 8 - (stacks[p.col]||0) * spacingY;
+          if(p.y >= targetY - p.size*0.18 && !p.settled){
+            p.settled = true;
+            p.y = targetY;
+            stacks[p.col] = (stacks[p.col]||0) + 1;
+            particles.splice(i,1);
+            particles.push(spawn(false));
+          } else if(p.y > canvas.height + 80){
+            particles.splice(i,1);
+            particles.push(spawn(false));
+          }
+        }
+        while(particles.length < maxParticles) particles.push(spawn(false));
+      }catch(e){}
+      drizzleRAF = requestAnimationFrame(frame);
+    }
+    return {
+      start: function(){ resize(); reset(true); if(drizzleRAF) cancelAnimationFrame(drizzleRAF); drizzleRAF = requestAnimationFrame(frame); drizzleActive=true; },
+      stopImmediate: function(){ // instantly stop and clear
+        if(drizzleRAF) cancelAnimationFrame(drizzleRAF);
+        drizzleRAF = null; drizzleActive=false;
+        try{ ctx.clearRect(0,0,canvas.width,canvas.height); }catch(e){}
+      },
+      stopGradual: function(){ // fallback gradual stop (not used in final)
+        if(drizzleRAF) cancelAnimationFrame(drizzleRAF);
+        drizzleRAF=null; drizzleActive=false;
+        try{ ctx.clearRect(0,0,canvas.width,canvas.height); }catch(e){}
+      },
+      resize: function(){ resize(); }
+    };
+  }
+
+  const drizzle = createDrizzleController();
+  window.addEventListener('resize', function(){ try{ drizzle.resize(); }catch(e){} });
+
+  /* ---------- footer helpers ---------- */
+  function showFooter(){ creditFooter.style.transition='opacity 1.5s ease'; creditFooter.style.opacity='0.8'; creditFooter.classList.add('footer-pulse'); }
+  function hideFooterInstant(){ creditFooter.style.transition='opacity 0.1s ease'; creditFooter.style.opacity='0'; creditFooter.classList.remove('footer-pulse'); }
+
+  /* ---------- game core (restored, robust) ---------- */
+
+  function updateLabels(){
+    document.getElementById('gridLbl').textContent = gridSize + 'x' + gridSize;
+    document.getElementById('drawsLbl').textContent = String(drawsTotal);
+    winsXEl.textContent = String(winsX);
+    winsOEl.textContent = String(winsO);
+    drawsTotalEl.textContent = String(drawsTotal);
+    playerLbl.textContent = playerName || 'Player';
+    modeLbl.textContent = mode || '2p';
+    aiLbl.textContent = (mode==='ai')? aiLevel : '-';
+  }
+
+  function idx(r,c){ return r*gridSize + c; }
+
+  function initGrid(n){
+    gridSize = n; grid = new Array(gridSize * gridSize);
+    for(let i=0;i<grid.length;i++) grid[i] = null;
+    blockedCells = {}; history = []; winner = null; currentPlayer = 'X'; // human X starts
+    updateLabels(); renderBoard(); setStatus(currentPlayer + "'s turn");
+    // AI waits for human move; do not auto-play here
+  }
+
+  function renderBoard(){
+    boardEl.innerHTML = '';
+    const sidePad = 40;
+    const maxW = Math.min(window.innerWidth - sidePad, 1100);
+    const maxH = Math.min(window.innerHeight - 260, 1000);
+    const usable = Math.min(maxW, maxH);
+    const gap = Math.max(6, Math.floor(usable*0.01));
+    boardEl.style.gap = gap + 'px';
+    const cellSize = Math.max(28, Math.floor((usable - (gridSize-1)*gap) / gridSize));
+    boardEl.style.gridTemplateColumns = 'repeat(' + gridSize + ',' + cellSize + 'px)';
+    boardEl.style.gridTemplateRows = 'repeat(' + gridSize + ',' + cellSize + 'px)';
+
+    for(let i=0;i<grid.length;i++){
+      const d=document.createElement('div'); d.className='cell'+(blockedCells[i]?' disabled':''); d.dataset.i=i;
+      const val = grid[i];
+      if(val==='X') d.innerHTML = '<span style="color:var(--xcolor);font-weight:800">' + val + '</span>';
+      else if(val==='O') d.innerHTML = '<span style="color:var(--ocolor);font-weight:800">' + val + '</span>';
+      else d.textContent='';
+      d.style.fontSize = Math.max(10, Math.floor(cellSize*0.5)) + 'px';
+      d.addEventListener('click', onCellClick);
+      boardEl.appendChild(d);
+    }
+  }
+
+  function computeWinLen(){ return Math.min(gridSize,5); }
+
+  function checkWinState(arr){
+    const N = gridSize, K = computeWinLen();
+    function countFrom(r,c,dr,dc){ const v = arr[r*N + c]; if(!v) return 0; let rr=r,cc=c,cnt=0; while(rr>=0 && rr<N && cc>=0 && cc<N && arr[rr*N + cc]===v){ cnt++; rr+=dr; cc+=dc; } return cnt; }
+    for(let r=0;r<N;r++){
+      for(let c=0;c<N;c++){
+        if(!arr[r*N+c]) continue;
+        if(c+(K-1)<N && countFrom(r,c,0,1)>=K) return {winner:arr[r*N+c]};
+        if(r+(K-1)<N && countFrom(r,c,1,0)>=K) return {winner:arr[r*N+c]};
+        if(r+(K-1)<N && c+(K-1)<N && countFrom(r,c,1,1)>=K) return {winner:arr[r*N+c]};
+        if(r+(K-1)<N && c-(K-1)>=0 && countFrom(r,c,1,-1)>=K) return {winner:arr[r*N+c]};
+      }
+    }
+    let full=true; for(let i=0;i<arr.length;i++) if(!arr[i]){ full=false; break; } if(full) return {draw:true}; return null;
+  }
+
+  function onCellClick(e){
+    const i = Number(e.currentTarget.dataset.i);
+    if(winner){ setStatus('Round finished'); return; }
+    if(blockedCells[i]){ setStatus('Cell blocked'); beep(); return; }
+    if(grid[i]){ beep(); setStatus('Cell taken'); return; }
+    // Human move: allow only if it's human's turn
+    if(mode === 'ai'){
+      if(currentPlayer !== 'X'){ setStatus('Wait for AI turn'); return; }
+      // place X
+      makeMove(i,'X');
+      // schedule AI: set currentPlayer to O
+      currentPlayer = 'O';
+      setStatus('AI is thinking...');
+      if(aiTimeout) clearTimeout(aiTimeout);
+      aiTimeout = setTimeout(()=>{ aiMove(); }, 1200 + Math.random()*300);
+    } else {
+      // 2-player local: currentPlayer toggles between X and O
+      makeMove(i, currentPlayer);
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      setStatus(currentPlayer + "'s turn");
+    }
+  }
+
+  function makeMove(i, pl){
+    history.push(grid.slice());
+    grid[i]=pl; renderBoard(); beep();
+    const res = checkWinState(grid);
+    if(res){
+      if(res.draw){
+        drawsTotal++; saveLocal('draws', drawsTotal); updateLabels(); setStatus('Round is a draw (#'+drawsTotal+').');
+        if(gridSize >= maxGrid){ setTimeout(finalizeAfterMax, 300); } else handlePostDraw();
+      } else {
+        winner = res.winner;
+        if(winner==='X'){ winsX++; saveLocal('winsX', winsX); } else { winsO++; saveLocal('winsO', winsO); }
+        updateLabels();
+        const whoName = (winner==='X') ? (playerName || 'Player') : (mode === 'ai' ? 'AI' : 'Opponent');
+        setStatus(whoName + ' (' + winner + ') wins!');
+        if(gridSize >= maxGrid){ setTimeout(finalizeAfterMax, 400); }
+        else { setTimeout(()=>{ boardEl.classList.add('flip'); setTimeout(()=>{ boardEl.classList.remove('flip'); initGrid(gridSize); },700); },700); }
+      }
+    } else {
+      updateLabels();
+    }
+  }
+
+  function handlePostDraw(){
+    boardEl.classList.add('flip'); setTimeout(()=>{ boardEl.classList.remove('flip'); },900);
+    const expected = Math.min(maxGrid, 3 + Math.floor(drawsTotal / expandEveryDraws));
+    if(expected > gridSize){
+      gridSize = expected; saveLocal('gridSize', gridSize);
+      setTimeout(()=>{ initGrid(gridSize); setStatus('Board expanded to ' + gridSize + 'x' + gridSize); },920);
+    } else {
+      setTimeout(()=>{ initGrid(gridSize); setStatus('New round'); },920);
+    }
+  }
+
+  /* ---------- AI functions (strict: only after human move) ---------- */
+  function aiMove(){
+    aiTimeout = null;
+    if(mode !== 'ai' || currentPlayer !== 'O') return;
+    const empties = []; for(let i=0;i<grid.length;i++) if(!grid[i]) empties.push(i);
+    if(!empties.length) return;
+    const win = findCriticalMove('O'); if(win !== -1){ makeMove(win,'O'); currentPlayer='X'; setStatus("Your turn"); return; }
+    const block = findCriticalMove('X'); if(block !== -1){ makeMove(block,'O'); currentPlayer='X'; setStatus("Your turn"); return; }
+    if(aiLevel === 'hard' && gridSize <= 6){ const best = minimaxBestMove(grid,'O',3); if(best && typeof best.index==='number'){ makeMove(best.index,'O'); currentPlayer='X'; setStatus("Your turn"); return; } }
+    const choice = empties[Math.floor(Math.random()*empties.length)];
+    makeMove(choice,'O');
+    currentPlayer='X'; setStatus("Your turn");
+  }
+
+  function findCriticalMove(mark){
+    const combos = generateLineCombos(gridSize, computeWinLen());
+    for(let i=0;i<combos.length;i++){
+      const line = combos[i]; const vals = line.map(j=>grid[j]);
+      let cM=0,e=0; for(let t=0;t<vals.length;t++){ if(vals[t]===mark) cM++; if(!vals[t]) e++; }
+      if(cM === computeWinLen()-1 && e===1){ for(let k=0;k<vals.length;k++) if(!vals[k]) return line[k]; }
+    }
+    return -1;
+  }
+
+  function generateLineCombos(N,K){
+    const combos=[];
+    for(let r=0;r<N;r++){ for(let c=0;c<=N-K;c++){ const line=[]; for(let k=0;k<K;k++) line.push(idx(r,c+k)); combos.push(line); } }
+    for(let c=0;c<N;c++){ for(let r=0;r<=N-K;r++){ const line=[]; for(let k=0;k<K;k++) line.push(idx(r+k,c)); combos.push(line); } }
+    for(let r=0;r<=N-K;r++){ for(let c=0;c<=N-K;c++){ const line=[]; for(let k=0;k<K;k++) line.push(idx(r+k,c+k)); combos.push(line); } }
+    for(let r=0;r<=N-K;r++){ for(let c=K-1;c<N;c++){ const line=[]; for(let k=0;k<K;k++) line.push(idx(r+k,c-k)); combos.push(line); } }
+    return combos;
+  }
+
+  function minimaxBestMove(boardArr, player, depthLimit){
+    function score(res, depth){ if(res && res.winner) return (res.winner==='O') ? (100-depth) : (depth-100); if(res && res.draw) return 0; return 0; }
+    function mm(b, pl, depth){
+      const r = checkWinState(b); if(r) return { score: score(r, depth) }; if(depth>=depthLimit) return { score:0 };
+      const moves=[]; for(let i=0;i<b.length;i++){ if(!b[i]){ const nb=b.slice(); nb[i]=pl; const rr = mm(nb, (pl==='X')?'O':'X', depth+1); moves.push({ index:i, score: rr.score }); } }
+      if(pl==='O'){ let best=-Infinity, idx=moves[0]?moves[0].index:0; for(let j=0;j<moves.length;j++) if(moves[j].score>best){ best=moves[j].score; idx=moves[j].index; } return { index: idx, score: best }; }
+      else { let best2=Infinity, idx2=moves[0]?moves[0].index:0; for(let j=0;j<moves.length;j++) if(moves[j].score<best2){ best2=moves[j].score; idx2=moves[j].index; } return { index: idx2, score: best2 }; }
+    }
+    return mm(boardArr.slice(), player, 0);
+  }
+
+  /* ---------- finalization & fireworks ---------- */
+  function finalizeAfterMax(){
+    let messageText, colorVar;
+    if(winsX > winsO){ messageText = 'CONGRATULATIONS ' + (playerName || 'Player') + ', you are the Ultimate Winner'; colorVar = 'var(--xcolor)'; }
+    else if(winsO > winsX){ messageText = 'CONGRATULATIONS ' + (mode === 'ai' ? 'AI' : 'Opponent') + ', you are the Ultimate Winner'; colorVar = 'var(--ocolor)'; }
+    else { messageText = 'FINAL TALLY: It is a tie — both did great!'; colorVar = 'var(--gold)'; }
+    launchFireworksScreen(messageText, colorVar);
+  }
+
+  function launchFireworksScreen(messageText, winnerColor){
+    // hide pages
+    document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));
+    // ensure drizzle is stopped (instant)
+    try{ drizzle.stopImmediate(); }catch(e){}
+    // show overlay
+    fwMessage.textContent = messageText;
+    fwOverlay.style.display = 'flex';
+    fwCanvas.style.display = 'block';
+    fwCanvas.width = window.innerWidth; fwCanvas.height = window.innerHeight;
+    // play fireworks then fade in footer beneath (footer lower z, so it will be under visuals)
+    startFireworks(function(){
+      // fade in footer slowly (beneath fireworks); make gold
+      creditFooter.style.color = 'var(--gold)';
+      creditFooter.style.transition = 'opacity 1.8s ease';
+      creditFooter.style.opacity = '0.8';
+      creditFooter.classList.add('footer-pulse');
+    });
+  }
+
+  function startFireworks(done){
+    const canvas = fwCanvas, ctx = fwCtx;
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const particles=[]; fwStop=false;
+    function rand(a,b){ return a + Math.random()*(b-a); }
+    function spawn(){
+      const count = 6 + Math.floor(Math.random()*6);
+      for(let i=0;i<count;i++){
+        particles.push({ x: rand(80,canvas.width-80), y: canvas.height + rand(10,60), vx: rand(-1.4,1.4), vy: -rand(7,12), life: 70+Math.random()*40, hue: Math.random()*360, stage:'rocket' });
+      }
+    }
+    function explode(p){
+      const sparks=[]; const c=12+Math.floor(Math.random()*18);
+      for(let i=0;i<c;i++){
+        const ang = Math.random()*Math.PI*2; const sp = 1 + Math.random()*4;
+        const color = (Math.random()<0.5)? 'hsl(120 100% '+(40+Math.floor(Math.random()*30))+'%)' : 'hsl(0 100% '+(40+Math.floor(Math.random()*30))+'%)';
+        sparks.push({ x:p.x, y:p.y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, life:30 + Math.random()*40, color:color, stage:'spark' });
+      }
+      return sparks;
+    }
+    let frames=0;
+    function frame(){
+      if(fwStop && particles.length===0){ ctx.clearRect(0,0,canvas.width,canvas.height); canvas.style.display='none'; if(typeof done==='function') done(); return; }
+      frames++;
+      ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      if(frames % 18 === 0) spawn();
+      for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i];
+        if(p.stage==='rocket'){
+          ctx.beginPath(); ctx.fillStyle = 'hsl('+p.hue+' 100% 60%)'; ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill();
+          p.x+=p.vx; p.y+=p.vy; p.vy += 0.12; p.life--;
+          if(p.vy >= -1 || p.life < 30){ const s = explode(p); particles.splice(i,1); for(let j=0;j<s.length;j++) particles.push(s[j]); }
+        } else {
+          ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(p.x,p.y, Math.max(1,p.life/10), 0, Math.PI*2); ctx.fill();
+          p.x+=p.vx; p.y+=p.vy; p.vy += 0.02; p.life--;
+          if(p.life<=0) particles.splice(i,1);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+    frame();
+    setTimeout(()=>{ fwStop=true; }, 3800);
+  }
+
+  // fireworks overlay buttons
+  fwRestart.addEventListener('click', function(){
+    fwStop = true; if(aiTimeout) clearTimeout(aiTimeout);
+    gridSize=3; drawsTotal=0; winsX=0; winsO=0;
+    updateLabels(); initGrid(3);
+    fwOverlay.style.display='none'; fwCanvas.style.display='none';
+    creditFooter.style.opacity='0'; creditFooter.classList.remove('footer-pulse');
+    flickerTo('pageMode');
+  });
+
+  fwExit.addEventListener('click', function(){
+    fwStop = true; if(aiTimeout) clearTimeout(aiTimeout);
+    fwOverlay.style.display='none'; fwCanvas.style.display='none';
+    creditFooter.style.opacity='0'; creditFooter.classList.remove('footer-pulse');
+    flickerTo('pageLogin');
+  });
+
+  /* ---------- local storage helpers (light) ---------- */
+  function saveLocal(k,v){ try{ localStorage.setItem('ttt_'+k,String(v)); }catch(e){} }
+  function loadLocal(k,d){ try{ const v=localStorage.getItem('ttt_'+k); return v===null?d:v; }catch(e){return d;} }
+  function clearLocalStats(){ try{ localStorage.removeItem('ttt_draws'); localStorage.removeItem('ttt_winsX'); localStorage.removeItem('ttt_winsO'); localStorage.removeItem('ttt_gridSize'); }catch(e){} }
+
+  /* ---------- transitions / page control ---------- */
+  function flickerTo(sectionId){
+    document.querySelectorAll('section').forEach(s=>s.classList.add('fadeout'));
+    fwOverlay.style.display='none'; fwCanvas.style.display='none';
+    setTimeout(()=>{
+      document.querySelectorAll('section').forEach(s=>{ s.classList.add('hidden'); s.classList.remove('fadeout'); });
+      const el = document.getElementById(sectionId); if(el) el.classList.remove('hidden');
+      if(sectionId === 'pageLogin' || sectionId === 'pageMode'){
+        // start drizzle & show footer
+        try{ drizzle.start(); }catch(e){}
+        setTimeout(()=>showFooter(), 500);
+      } else {
+        // entering game: instantly stop drizzle and hide footer
+        try{ drizzle.stopImmediate(); }catch(e){}
+        hideFooterInstant();
+      }
+    }, 600);
+  }
+
+  /* ---------- boot & wiring ---------- */
+  // ensure clean stats so old scores don't show
+  clearLocalStats();
+
+  typeLines(['Initializing CMD Tic-Tac-Toe...','Loading power-ups...','Access Granted.'], bootText, function(){
+    loginArea.classList.remove('hidden');
+    // start drizzle immediately
+    try{ drizzle.start(); }catch(e){}
+    setTimeout(()=>showFooter(), 500);
+  });
+
+  document.addEventListener('click', function(){ loginArea.classList.remove('hidden'); try{ if(!drizzleActive) drizzle.start(); }catch(e){} });
+  document.addEventListener('keydown', function(e){ if((e.key === 'Enter' || e.keyCode === 13) && loginArea && !loginArea.classList.contains('hidden')) loginBtn.click(); });
+
+  loginBtn.addEventListener('click', function(){
+    clearLocalStats();
+    playerName = (nameInput.value || '').trim() || 'Player';
+    hiName.textContent = 'Welcome, ' + playerName;
+    playerLbl.textContent = playerName;
+    flickerTo('pageMode');
+  });
+
+  clearDataBtn.addEventListener('click', function(){ try{ localStorage.clear(); }catch(e){} nameInput.value=''; alert('Saved data cleared.'); });
+
+  twoBtn.addEventListener('click', function(){ aiSettings.classList.add('hidden'); mode='2p'; saveLocal('mode', mode); });
+  aiBtn.addEventListener('click', function(){ aiSettings.classList.remove('hidden'); mode='ai'; saveLocal('mode', mode); });
+
+  startGame.addEventListener('click', function(){
+    clearLocalStats();
+    aiLevel = aiDifficulty.value || 'medium'; saveLocal('aiLevel', aiLevel);
+    gridSize = 3; drawsTotal = 0; winsX = 0; winsO = 0; saveLocal('gridSize',3);
+    updateLabels(); initGrid(3);
+    // instantly stop drizzle and footer (as requested)
+    try{ drizzle.stopImmediate(); }catch(e){} hideFooterInstant();
+    flickerTo('pageGame');
+  });
+
+  exitMode.addEventListener('click', function(){ flickerTo('pageLogin'); });
+
+  undoBtn.addEventListener('click', function(){ if(history.length===0) return; grid = history.pop(); winner=null; renderBoard(); setStatus('Undo applied'); });
+  restartBtn.addEventListener('click', function(){ if(aiTimeout) clearTimeout(aiTimeout); clearLocalStats(); gridSize=3; drawsTotal=0; winsX=0; winsO=0; saveLocal('gridSize',3); updateLabels(); initGrid(3); setStatus('Game reset by user.'); flickerTo('pageMode'); });
+  toggleSoundBtn.addEventListener('click', function(){ soundOn = !soundOn; setStatus('Sound ' + (soundOn ? 'ON' : 'OFF')); });
+  exitGameBtn.addEventListener('click', function(){ fwStop=true; if(aiTimeout) clearTimeout(aiTimeout); playerName=''; nameInput.value=''; clearLocalStats(); try{ drizzle.stopImmediate(); }catch(e){} hideFooterInstant(); flickerTo('pageLogin'); });
+
+  // instantiate controller & init
+  try{ /* created above */ }catch(e){}
+  updateLabels(); initGrid(3);
+  creditFooter.style.opacity = '0';
+
+}); // DOMContentLoaded
+</script>
+</body>
+</html>

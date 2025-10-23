@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map 1: Leaflet Example</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Map 1: Leaflet Example</h1>
+        <a href="index.html">Back to Home</a>
+    </header>
+    <main>
+        <div id="map" style="width: 100%; height: 500px;"></div>
+    </main>
+    <footer>
+        <p>Leaflet Map Example</p>
+    </footer>
+
+    <script>
+        var map = L.map('map').setView([51.505, -0.09], 13); // Coordinates for London
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        L.marker([51.5, -0.09]).addTo(map)
+            .bindPopup('A marker in London')
+            .openPopup();
+    </script>
+</body>
+</html>

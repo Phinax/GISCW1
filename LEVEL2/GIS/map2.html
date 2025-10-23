@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map 2: Google Maps Example</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Map 2: Google Maps Example</h2>
+    <div id="map"></div>
+
+    <script>
+        function initMap() {
+            // Map center and options
+            var mapOptions = {
+                center: {lat: 51.5074, lng: -0.1278}, // Default center (London)
+                zoom: 10
+            };
+            
+            // Initialize the map
+            var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+            
+            // First marker (London)
+            var marker1 = new google.maps.Marker({
+                position: {lat: 51.5074, lng: -0.1278}, // Coordinates for London
+                map: map,
+                title: 'London'
+            });
+            
+            var infowindow1 = new google.maps.InfoWindow({
+                content: '<h3>London</h3><p>Capital city of the UK</p>'
+            });
+
+            marker1.addListener('click', function() {
+                infowindow1.open(map, marker1);
+            });
+
+            // Second marker (Paris)
+            var marker2 = new google.maps.Marker({
+                position: {lat: 48.8566, lng: 2.3522}, // Coordinates for Paris
+                map: map,
+                title: 'Paris'
+            });
+
+            var infowindow2 = new google.maps.InfoWindow({
+                content: '<h3>Paris</h3><p>Capital city of France</p>'
+            });
+
+            marker2.addListener('click', function() {
+                infowindow2.open(map, marker2);
+            });
+        }
+    </script>
+
+    <!-- Load Google Maps API with your key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
+
+</body>
+</html>

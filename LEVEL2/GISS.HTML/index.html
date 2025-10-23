@@ -1,0 +1,55 @@
+
+<html>
+    <head>
+        <title>
+            boilerplatve4
+        </title>
+    </head>
+            <body>
+                <div id = "myMapspace"
+                    style = "height:500px; width:500px; background-color: lightblue; border: 8px solid blue;  margin-left: 5px">
+                </div>
+
+                <script>
+                    function draw_map() {
+
+                    var myMapOptions = {
+                        center: new google.maps.LatLng(52.417, -3.573),
+                        zoom: 7,
+                        mapTypeId: google.maps.MapTypeId.ROADMAP
+
+                    }
+
+                    var mymap = new google.maps.Map (document.getElementById("myMapspace"), myMapOptions);
+
+					
+
+                    var loc = new google.maps.LatLng(51.47806, -3.1825);
+                    var mkrOpt = {
+                    position: loc,
+                        map: mymap }
+
+                        var mkr = new google.maps.Marker(mkrOpt);
+
+                    var loc = new google.maps.LatLng(51.47806, -3.1825);
+                    var mkrOpt = {
+                        postion: loc,
+                        map: mymap
+                    }
+                    var mkl = new google.maps.Marker(mkrOpt)
+
+                    var image1 = 'https://the_URL_of_your_icon/iconname.png';
+                    var mkr1 = new google.maps.Marker({
+                    position: {lat: 51.642989483903,lng: -3.934978954893},
+                    map: Themap,
+                    title: 'Liberty Stadium'
+                    });
+                }
+                </script>
+
+                <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQyVcKospZ88RyOY6LrqjdXyMlZ7G8JGs&callback=draw_map"></script>
+            
+
+            </body>
+
+  </html>

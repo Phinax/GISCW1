@@ -1,0 +1,103 @@
+/* General body styling */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f4f4f4;
+}
+
+/* Hero section styling */
+.hero {
+    background-image: url('GISMAP.png'); /* Path to the new PNG image */
+    background-size: cover; /* Make the image cover the full area */
+    background-position: center; /* Center the image */
+    height: 100vh; /* Full viewport height */
+    color: white;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+}
+
+
+
+.header-content {
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    padding: 20px;
+    border-radius: 8px;
+}
+
+h1 {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline-block;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: #2ab4eb;
+    text-decoration: none;
+    font-size: 1.1rem;
+    padding: 8px;
+    border: 2px solid #ffffff;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+nav ul li a:hover {
+    background-color: #2184d4;
+    color: black;
+}
+
+/* Main content section */
+main {
+    padding: 20px;
+    text-align: center;
+}
+
+/* Footer styling */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+}
+
+/* Responsive styling for smaller screens */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2.5rem; /* Adjust header size for mobile */
+    }
+
+    p {
+        font-size: 1rem; /* Adjust paragraph size for mobile */
+    }
+
+    nav ul {
+        text-align: center; /* Center-align the navigation links */
+    }
+
+    nav ul li {
+        display: block; /* Stack the navigation items */
+        margin: 10px 0;
+    }
+}
