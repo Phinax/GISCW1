@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map 4: GeoJSON and Polygons</title>
+   <!--include the Google Maps script with async and defer-->>
+     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcHhZnSetoJNi5T5CFwNPCm2LrGmju2zA&callback=draw_map" async defer></script>
+</head>
+<body>
+   <div id="myMap"
+         style="height: 800px; width: 1800px; background-color: lightblue; border: 8px solid blue; margin-left: 5px;">
+        
+    </div>
+
+    <script>
+        function draw_map() {
+            var myMapoptions = {
+                center: new google.maps.LatLng(52.417, -3.573),
+                zoom: 2.90,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            var myMap = new google.maps.Map(document.getElementById("myMap"), myMapoptions);
+
+            var geoJsonData = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[
+                                [-10, 40], [-20, 40], [-20, 30], [-10, 30], [-10, 40]
+                            ]]
+                        },
+                        "properties": {
+                            "name": "Region 1"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[
+                                [10, 40], [20, 40], [20, 30], [10, 30], [10, 40]
+                            ]]
+                        },
+                        "properties": {
+                            "name": "Region 2"
+                        }
+                    }
+                ]
+            };
+
+            myMap.data.addGeoJson(geoJsonData);
+            myMap.data.setStyle({
+                fillColor: 'blue',
+                fillOpacity: 0.5,
+                strokeColor: 'black',
+                strokeWeight: 2
+            });
+
+            myMap.data.addListener('click', function(event) {
+                var name = event.feature.getProperty('name');
+                var content = '<h3>' + name + '</h3>';
+                var infowindow = new google.maps.InfoWindow({
+                    content: content,
+                    position: event.latLng
+                });
+                infowindow.open(myMap);
+            });
+        }
+    </script>
+</body>
+</html>

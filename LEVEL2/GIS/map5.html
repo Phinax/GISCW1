@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map 5: Population of Countries</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    .wrap { display: flex; min-height: 100vh; }
+    #myMap { width: 70%; height: 100vh; border: 8px solid blue; background: #eef; }
+    aside { width: 30%; padding: 16px; overflow: auto; border-left: 1px solid #ddd; background:#fff; }
+    h2 { margin: 0 0 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
+    th { background: #f7f7f7; text-align: left; }
+    .nav { margin: 12px 0 0; }
+    .nav a { margin-right: 8px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="myMap"></div>
+    <aside>
+      <h2>Population of 10 Countries</h2>
+      <table>
+        <thead><tr><th>Country</th><th>Population</th></tr></thead>
+        <tbody id="popRows"></tbody>
+      </table>
+      <div class="nav">
+        <a href="map4.html">Prev: Map 4</a> <!-- Link to the previous page -->
+        <a href="index.html">Home</a> <!-- Link to the home page -->
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // Country data with bounding boxes
+    const countries = [
+      { name: "China", pop: 1412600000, box: [[73, 18], [135, 18], [135, 54], [73, 54]] },
+      { name: "India", pop: 1393000000, box: [[68, 6], [97, 6], [97, 36], [68, 36]] },
+      { name: "United States", pop: 331000000, box: [[-125, 25], [-66, 25], [-66, 49], [-125, 49]] },
+      { name: "Indonesia", pop: 276000000, box: [[95, -11], [141, -11], [141, 6], [95, 6]] },
+      { name: "Pakistan", pop: 242000000, box: [[60, 23], [77, 23], [77, 37], [60, 37]] },
+      { name: "Brazil", pop: 213000000, box: [[-74, -34], [-34, -34], [-34, 6], [-74, 6]] },
+      { name: "Nigeria", pop: 216000000, box: [[2, 4], [15, 4], [15, 14], [2, 14]] },
+      { name: "Bangladesh", pop: 170000000, box: [[88, 20], [93, 20], [93, 27], [88, 27]] },
+      { name: "Russia", pop: 145000000, box: [[30, 41], [180, 41], [180, 82], [30, 82]] },
+      { name: "Mexico", pop: 129000000, box: [[-118, 14], [-86, 14], [-86, 33], [-118, 33]] }
+    ];
+
+    // Create population table on the sidebar
+    function buildSidebar(){
+      const tbody = document.getElementById("popRows");
+      tbody.innerHTML = countries.map(c =>
+        `<tr><td>${c.name}</td><td>${c.pop.toLocaleString()}</td></tr>`
+      ).join("");
+    }
+
+    // Convert countries data to GeoJSON for map
+    function toGeoJsonFeatures(){
+      return countries.map(c => ({
+        type: "Feature",
+        properties: { name: c.name, population: c.pop },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[
+            [c.box[0][0], c.box[0][1]],
+            [c.box[1][0], c.box[1][1]],
+            [c.box[2][0], c.box[2][1]],
+            [c.box[3][0], c.box[3][1]],
+            [c.box[0][0], c.box[0][1]]  // close ring
+          ]]
+        }
+      }));
+    }
+
+    // Set a scale factor (adjust as needed)
+    const scaleFactor = 100000000; // This factor controls how much the population affects the size of the polygon/marker
+
+    function initMap(){
+      buildSidebar();
+
+      const map = new google.maps.Map(document.getElementById("myMap"), {
+        center: { lat: 20, lng: 10 },
+        zoom: 2,
+        minZoom: 2,
+        streetViewControl: false,
+        mapTypeControl: false
+      });
+
+      const fc = { type: "FeatureCollection", features: toGeoJsonFeatures() };
+      map.data.addGeoJson(fc);
+
+      // Style polygons (or markers) based on population
+      map.data.setStyle(function(feature) {
+        const population = feature.getProperty('population');
+        const size = population / scaleFactor; // Scale the size of the marker/polygon based on population
+        
+        return {
+          fillColor: "#3b82f6",
+          fillOpacity: 0.35,
+          strokeColor: "#1f2937",
+          strokeWeight: 1,
+          scale: size // Apply the scaling to the marker/polygon
+        };
+      });
+
+      const info = new google.maps.InfoWindow();
+
+      // Click to show name + population
+      map.data.addListener("click", e => {
+        const name = e.feature.getProperty("name");
+        const pop  = e.feature.getProperty("population");
+        info.setContent(`<div style="min-width:180px">
+          <strong>${name}</strong><br/>Population: ${pop.toLocaleString()}
+        </div>`);
+        info.setPosition(e.latLng);
+        info.open(map);
+      });
+
+      // Keep the info window open while zooming around like a gremlin
+      map.addListener("zoom_changed", () => {
+        if (info.getMap()) {
+          // no-op; Google keeps it open unless you close it
+        }
+      });
+    }
+
+    window.initMap = initMap;
+  </script>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcHhZnSetoJNi5T5CFwNPCm2LrGmju2zA&callback=initMap" async defer></script>
+</body>
+</html>

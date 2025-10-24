@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map 9: Precision Location Mapping</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcHhZnSetoJNi5T5CFwNPCm2LrGmju2zA&callback=initMap" async defer></script>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    .wrap { display: flex; min-height: 100vh; }
+    #myMap { flex: 1; height: 100vh; border: 8px solid blue; }
+    aside { width: 300px; padding: 16px; background-color: #f4f4f4; border-left: 1px solid #ddd; }
+    h2 { margin: 0 0 12px; }
+    .nav { margin-top: 20px; }
+    .nav a { margin-right: 10px; text-decoration: none; color: #007BFF; }
+    .nav a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="myMap"></div>
+    <aside>
+      <h2>Precision Location Mapping</h2>
+      <p>Map out points with detailed information (e.g., customers, stores).</p>
+      <div class="nav">
+        <a href="map8.html">Prev: Map 8</a> 
+        <a href="index.html">Home</a>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("myMap"), {
+        center: {lat: 40.7128, lng: -74.0060},
+        zoom: 12,
+      });
+
+      const locations = [
+        {lat: 40.7128, lng: -74.0060, info: 'New York City'},
+        {lat: 40.730610, lng: -73.935242, info: 'Brooklyn'},
+        {lat: 40.7580, lng: -73.9855, info: 'Times Square'}
+      ];
+
+      locations.forEach(location => {
+        const marker = new google.maps.Marker({
+          position: {lat: location.lat, lng: location.lng},
+          map: map,
+          title: location.info
+        });
+
+        const infowindow = new google.maps.InfoWindow({
+          content: location.info
+        });
+
+        marker.addListener('click', () => {
+          infowindow.open(map, marker);
+        });
+      });
+    }
+
+    window.initMap = initMap;
+  </script>
+</body>
+</html>

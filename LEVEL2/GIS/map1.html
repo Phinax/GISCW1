@@ -1,34 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map 1: Leaflet Example</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <title>Document</title>
 </head>
 <body>
-    <header>
-        <h1>Map 1: Leaflet Example</h1>
-        <a href="index.html">Back to Home</a>
-    </header>
-    <main>
-        <div id="map" style="width: 100%; height: 500px;"></div>
-    </main>
-    <footer>
-        <p>Leaflet Map Example</p>
-    </footer>
+    <a href="map2.html">NEXT: MAP 2 </a>
 
+    <div id="myMap"
+         style="height: 800px; width: 1800px; background-color: lightblue; border: 8px solid blue; margin-left: 5px;">
+        
+    </div>
     <script>
-        var map = L.map('map').setView([51.505, -0.09], 13); // Coordinates for London
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        function draw_map()  {
+            var myMapoptions = {
+                center: new google.maps.LatLng(52.417, -3.573),
+                zoom: 7,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            }
+            var myMap = new google.maps.Map(document.getElementById("myMap"), myMapoptions);
 
-        L.marker([51.5, -0.09]).addTo(map)
-            .bindPopup('A marker in London')
-            .openPopup();
+            var loc = new google.maps.LatLng(51.47806, -3.1825);
+            var mkrOpt = {
+                position: loc,
+                map: myMap
+            }
+
+
+        }
+
+
+
+        
     </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcHhZnSetoJNi5T5CFwNPCm2LrGmju2zA&callback=draw_map"></script>
+
 </body>
 </html>

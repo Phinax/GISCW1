@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map 6: Drive-Time Analysis</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcHhZnSetoJNi5T5CFwNPCm2LrGmju2zA&callback=initMap" async defer></script>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    .wrap { display: flex; min-height: 100vh; }
+    #myMap { flex: 1; height: 100vh; border: 8px solid blue; }
+    aside { width: 300px; padding: 16px; background-color: #f4f4f4; border-left: 1px solid #ddd; }
+    h2 { margin: 0 0 12px; }
+    .nav { margin-top: 20px; }
+    .nav a { margin-right: 10px; text-decoration: none; color: #007BFF; }
+    .nav a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="myMap"></div>
+    <aside>
+      <h2>Drive-Time Analysis</h2>
+      <p>Analyze the time it takes to travel between multiple points within a region.</p>
+      <div class="nav">
+        <a href="map5.html">Prev: Map 5</a> 
+        <a href="index.html">Home</a>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("myMap"), {
+        center: {lat: 40.7128, lng: -74.0060}, // New York City for example
+        zoom: 12,
+      });
+
+      const origin = new google.maps.LatLng(40.7128, -74.0060); // Origin point (New York)
+      const destination = new google.maps.LatLng(40.730610, -73.935242); // Destination (Brooklyn)
+      
+      const service = new google.maps.DistanceMatrixService();
+
+      // Call the Google API to get drive-time data
+      service.getDistanceMatrix({
+        origins: [origin],
+        destinations: [destination],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+      }, (response, status) => {
+        if (status === google.maps.DistanceMatrixStatus.OK) {
+          const duration = response.rows[0].elements[0].duration.text;
+          const infowindow = new google.maps.InfoWindow({
+            content: `<div><strong>Drive Time:</strong> ${duration}</div>`,
+            position: origin,
+          });
+          infowindow.open(map);
+        }
+      });
+    }
+
+    window.initMap = initMap;
+  </script>
+</body>
+</html>

@@ -1,92 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map 3: Google Maps with Polygons</title>
-    <style>
-        #map {
-            height: 500px;
-            width: 100%;
-        }
-    </style>
+
+    <title>Document</title>
 </head>
 <body>
+<a href="map4.html">NEXT: MAP 4 </a>
 
-    <h2>Map 3: Google Maps with Polygons</h2>
-    <div id="map"></div>
-
+    <div id="myMap"
+         style="height: 800px; width: 1800px; background-color: lightblue; border: 8px solid blue; margin-left: 5px;">
+        
+    </div>
     <script>
-        function initMap() {
-            // Map center and options
-            var mapOptions = {
-                center: {lat: 51.5074, lng: -0.1278}, // Default center (London)
-                zoom: 5
-            };
-            
-            // Initialize the map
-            var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+        function draw_map()  {
+            var myMapoptions = {
+                center: new google.maps.LatLng(52.417, -3.573),
+                zoom: 7,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            }
+            var myMap = new google.maps.Map(document.getElementById("myMap"), myMapoptions);
 
-            // Define GeoJSON data for regions (territories) with population info
-            var geoJsonData = {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Polygon",
-                            "coordinates": [[
-                                [-10, 40], [-20, 40], [-20, 30], [-10, 30], [-10, 40]
-                            ]]
-                        },
-                        "properties": {
-                            "name": "Region 1",
-                            "population": 5000000
-                        }
-                    },
-                    {
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Polygon",
-                            "coordinates": [[
-                                [10, 40], [20, 40], [20, 30], [10, 30], [10, 40]
-                            ]]
-                        },
-                        "properties": {
-                            "name": "Region 2",
-                            "population": 3000000
-                        }
-                    }
-                ]
-            };
+            var loc = new google.maps.LatLng(51.47806, -3.1825);
+            var mkrOpt = {
+                position: loc,
+                map: myMap
+            }
 
-            // Load GeoJSON data and add polygons to the map
-            map.data.addGeoJson(geoJsonData);
+            var mkr = new google.maps.Marker(mkrOpt);
 
-            // Style for the polygons
-            map.data.setStyle({
-                fillColor: 'blue',
-                fillOpacity: 0.5,
-                strokeColor: 'black',
-                strokeWeight: 2
+            var mk2 = new google.maps.Marker({
+                position: {lat:51.64293790951328, lng:-3.9345824172614816},
+                map: myMap,
+                title: 'Liberty Stadium'
+
+            });var mk2 = new google.maps.Marker({
+                position: {lat:51.74293790951328, lng:-9.9345824172614816},
+                map: myMap,
+                title: 'Liberty Stadium'
             });
 
-            // Add info windows to show population when a polygon is clicked
-            map.data.addListener('click', function(event) {
-                var name = event.feature.getProperty('name');
-                var population = event.feature.getProperty('population');
-                var content = '<h3>' + name + '</h3><p>Population: ' + population + '</p>';
-                var infowindow = new google.maps.InfoWindow({
-                    content: content,
-                    position: event.latLng
-                });
-                infowindow.open(map);
-            });
+
+
         }
+
+
+
+        
     </script>
 
-    <!-- Load Google Maps API with your key -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcHhZnSetoJNi5T5CFwNPCm2LrGmju2zA&callback=draw_map"></script>
 
 </body>
 </html>
